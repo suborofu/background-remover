@@ -13,7 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Keep only demo
-        run: mv ${{ github.workspace }}/demo ${{ github.workspace }}/.. && rm -rf ${{ github.workspace }} && mv ${{ github.workspace }}/../demo ${{ github.workspace }}
+        run: |
+          cd ${{ github.workspace }}/..
+          mv ${{ github.workspace }}/demo .
+          rm -rf ${{ github.workspace }}
+          mv ./demo ${{ github.workspace }} 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
