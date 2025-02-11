@@ -30,6 +30,8 @@ jobs:
         run: cd ${{ github.workspace }} && npm ci
       - name: Build
         run: cd ${{ github.workspace }} && npm run build
+      - name: Jekyll bypass
+        run: touch ${{ github.workspace }}/build/.nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
