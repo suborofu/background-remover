@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mv ${{ github.workspace }}/demo .
           rm -rf ${{ github.workspace }}
-          mv ./demo ${{ github.workspace }} 
+          mv ./demo ${{ github.workspace }}
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
@@ -36,6 +36,9 @@ jobs:
           path: ${{ github.workspace }}/build
 
   deploy:
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
