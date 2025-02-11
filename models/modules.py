@@ -110,21 +110,13 @@ class AdaptiveAvgPool2D(nn.Module):
         Returns:
             x: shape (batch size, channel, 1, output_size)
         """
-        shape_x = x.shape
-        if shape_x[-1] < self.output_size[-1]:
-            paddzero = torch.zeros(
-                (shape_x[0], shape_x[1], shape_x[2], self.output_size[-1] - shape_x[-1])
-            )
-            x = torch.cat((x, paddzero), axis=-1)
-
         stride_size = torch.floor(torch.tensor(x.shape[-2:]) / self.output_size).to(
             dtype=torch.int32
         )
         kernel_size = torch.tensor(x.shape[-2:]) - (self.output_size - 1) * stride_size
-        avg = nn.AvgPool2d(
-            kernel_size=kernel_size.tolist(), stride=kernel_size.tolist()
+        x = F.avg_pool2d(
+            x, kernel_size=kernel_size.tolist(), stride=kernel_size.tolist()
         )
-        x = avg(x)
         return x
 
 
@@ -172,6 +164,76 @@ class ASPP(nn.Module):
 class Skip(nn.Module):
     def __init__(self):
         super().__init__()
+        self.dummy_conv = nn.Conv2d(1, 1, 1)
 
     def forward(self, x):
         return x
+
+
+class Dilation2D(nn.Module):
+    def __init__(self, kernel_size, iterations=10):
+        super().__init__()
+
+        self.iterations = iterations
+        kernel = torch.ones(1, 1, kernel_size, kernel_size)
+        self.filter = nn.Conv2d(
+            in_channels=1,
+            out_channels=1,
+            kernel_size=kernel_size,
+            padding=kernel_size // 2,
+        )
+        self.filter.weight.data.copy_(kernel)
+        self.filter.bias.data.copy_(torch.zeros(1))
+
+        for param in self.parameters():
+            param.requires_grad = False
+
+    def train(self, mode=True):
+        super(Dilation2D, self).train(False)
+        return self
+
+    def forward(self, x):
+        for _ in range(self.iterations):
+            x = self.filter(x).clip(min=0, max=1)
+        return x
+
+
+class Erosion2D(Dilation2D):
+    def forward(self, x):
+        return 1 - super().forward(1 - x)
+
+
+class DirectedDilation2D(Dilation2D):
+    def __init__(self, kernel_size, iterations=10, direction="up"):
+        super().__init__(kernel_size, iterations)
+        assert direction in ["up", "down", "left", "right"]
+
+        kernel = torch.zeros(1, 1, kernel_size, kernel_size)
+        if direction == "up":
+            kernel[0, 0, kernel_size // 2 :, kernel_size // 2] = 1
+        elif direction == "down":
+            kernel[0, 0, : kernel_size // 2, kernel_size // 2] = 1
+        elif direction == "left":
+            kernel[0, 0, kernel_size // 2, kernel_size // 2 :] = 1
+        elif direction == "right":
+            kernel[0, 0, kernel_size // 2, : kernel_size // 2] = 1
+
+        self.filter = nn.Conv2d(
+            in_channels=1,
+            out_channels=1,
+            kernel_size=kernel_size,
+            padding=kernel_size // 2,
+        )
+        self.filter.weight.data.copy_(kernel)
+        self.filter.bias.data.copy_(torch.zeros(1))
+
+        for param in self.parameters():
+            param.requires_grad = False
+
+
+class DirectedErosion2D(DirectedDilation2D):
+    def __init__(self, kernel_size, iterations=10, direction="up"):
+        super().__init__(kernel_size, iterations, direction)
+
+    def forward(self, x):
+        return 1 - super().forward(1 - x)

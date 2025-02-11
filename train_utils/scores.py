@@ -49,11 +49,6 @@ class Metrics:
         target = target.to(dtype=torch.int8)
 
         result = self.metrics(pred, target)
-        if pred.max() == 0 and target.max() == 0:
-            for key in result.keys():
-                result[key] = torch.tensor(
-                    result[key], dtype=torch.float32, device=result[key].device
-                )
         self.metrics.reset()
         result.update({"bce_loss": bce_score})
         result.update({"iou_loss": iou_score})

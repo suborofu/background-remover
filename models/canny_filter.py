@@ -137,16 +137,20 @@ class CannyFilter(nn.Module):
         height = inidices_positive.shape[2]
         width = inidices_positive.shape[3]
         pixel_count = height * width
-        pixel_range = torch.arange(pixel_count)
+        pixel_range = torch.arange(pixel_count).to(img.device)
 
         indices = inidices_positive.flatten(1) * pixel_count + pixel_range
+        indices = indices.round().long()
+        indices[indices < 0] = 0
         channel_select_filtered_positive = (
-            all_filtered.flatten(1).gather(1, indices.long()).view(-1, 1, height, width)
+            all_filtered.flatten(1).gather(1, indices).view(-1, 1, height, width)
         )
 
         indices = inidices_negative.flatten(1) * pixel_count + pixel_range
+        indices = indices.round().long()
+        indices[indices < 0] = 0
         channel_select_filtered_negative = (
-            all_filtered.flatten(1).gather(1, indices.long()).view(-1, 1, height, width)
+            all_filtered.flatten(1).gather(1, indices).view(-1, 1, height, width)
         )
 
         channel_select_filtered = torch.stack(
@@ -158,4 +162,8 @@ class CannyFilter(nn.Module):
         grad_mag[is_max == 0] = 0.0
         grad_mag[grad_mag < self.threshold] = 0.0
 
+        grad_mag[:, :, 0, :] = 0.0
+        grad_mag[:, :, -1, :] = 0.0
+        grad_mag[:, :, :, 0] = 0.0
+        grad_mag[:, :, :, -1] = 0.0
         return grad_mag

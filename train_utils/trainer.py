@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 from pathlib import Path
@@ -24,6 +25,7 @@ class Trainer:
         initial_epoch: int = 1,
         batch_size: int = 1,
         train_size: int = 5000,
+        dataset_classes: list[str] | None = None,
         val_size: int = 1000,
         learning_rate: float = 1e-5,
         weight_decay: float = 1e-6,
@@ -39,11 +41,12 @@ class Trainer:
             dataset_path=dataset_path,
             train_size=train_size,
             val_size=val_size,
+            dataset_classes=dataset_classes,
             device=device,
         )
         loader_args = dict(
             batch_size=batch_size,
-            num_workers=min(os.cpu_count(), batch_size, 8),
+            num_workers=min(os.cpu_count(), batch_size, 4),
             drop_last=True,
             multiprocessing_context="fork" if self.device.type == "mps" else None,
             collate_fn=collate_fn,
@@ -100,49 +103,62 @@ class Trainer:
     def train_epoch(self, epoch: int):
         self.on_train_epoch_start(epoch)
 
-        scores_epic = dict()
+        scores_epoch = dict()
         for i, batch in enumerate(self.train_dataloader):
             self.on_train_batch_start(epoch, i)
             scores_batch = {}
 
+            # with torch.autocast(self.device.type):
             images, true_masks = batch["images"], batch["masks"]
             x1 = self.model.preprocess(images)
             x2 = self.model.segment_image(x1)
 
             if self.do_train_body:
-                masks_pred = self.model.postprocess(x2, self.model.refiner_size)
+                masks_pred = self.model.postprocess(x2)[:, 1]
                 scores = self.metrics.calc(masks_pred, true_masks, prefix="body")
                 scores_batch.update(scores)
                 for key, value in scores.items():
-                    if key not in scores_epic:
-                        scores_epic[key] = []
-                    scores_epic[key].append(value)
+                    if key not in scores_epoch:
+                        scores_epoch[key] = []
+                    scores_batch[key] = value.item()
+                    scores_epoch[key].append(value.item())
 
                 self.body_optimizer.zero_grad(True)
                 scores["body_iou_loss"].backward(retain_graph=True)
                 scores["body_bce_loss"].backward()
                 self.body_optimizer.step()
                 self.body_scheduler.step()
+                del scores
 
-            if self.do_train_refiner:
-                x = self.model.forward_refiner(x1, x2.detach())
-                masks_pred = self.model.postprocess(x, self.model.refiner_size)
+            if self.do_train_refiner and (
+                "body_iou_loss" not in scores_batch
+                or scores_batch["body_iou_loss"] < 0.2
+            ):
+                x1 = self.model.refine_segmentation(x2.detach(), x1.detach()[:, 3:])
+                masks_pred = self.model.postprocess(x1)[:, 1]
                 scores = self.metrics.calc(masks_pred, true_masks, prefix="refiner")
                 scores_batch.update(scores)
                 for key, value in scores.items():
-                    if key not in scores_epic:
-                        scores_epic[key] = []
-                    scores_epic[key].append(value)
+                    if key not in scores_epoch:
+                        scores_epoch[key] = []
+                    scores_batch[key] = value.item()
+                    scores_epoch[key].append(value.item())
 
                 self.refiner_optimizer.zero_grad(True)
                 scores["refiner_iou_loss"].backward(retain_graph=True)
                 scores["refiner_bce_loss"].backward()
                 self.refiner_optimizer.step()
                 self.refiner_scheduler.step()
+                del scores
+
+            del images, true_masks, x1, x2
+            gc.collect()
+            if self.device.type == "cuda":
+                torch.cuda.empty_cache()
 
             self.on_train_batch_end(epoch, i, scores_batch)
 
-        self.on_train_epoch_end(epoch, scores_epic)
+        self.on_train_epoch_end(epoch, scores_epoch)
 
     def eval_epoch(self, epoch: int):
         self.on_eval_epoch_start(epoch)
@@ -150,16 +166,24 @@ class Trainer:
         scores_epoch = dict()
         for i, batch in enumerate(self.eval_dataloader):
             self.on_eval_batch_start(epoch, i)
+            scores_batch = {}
 
-            images, true_masks = batch["images"], batch["masks"]
-            masks_pred = self.model(images)
-            scores = self.metrics.calc(masks_pred, true_masks)
-            for key, value in scores.items():
-                if key not in scores_epoch:
-                    scores_epoch[key] = []
-                scores_epoch[key].append(value)
+            with torch.inference_mode():  # , torch.autocast(self.device.type):
+                images, true_masks = batch["images"], batch["masks"]
+                masks_pred = self.model(images)[:, 1]
+                scores = self.metrics.calc(masks_pred, true_masks)
+                for key, value in scores.items():
+                    if key not in scores_epoch:
+                        scores_epoch[key] = []
+                    scores_batch[key] = value.item()
+                    scores_epoch[key].append(value.item())
 
-            self.on_eval_batch_end(epoch, i, scores)
+            del images, true_masks, masks_pred, scores
+            gc.collect()
+            if self.device.type == "cuda":
+                torch.cuda.empty_cache()
+
+            self.on_eval_batch_end(epoch, i, scores_batch)
 
         self.on_eval_epoch_end(epoch, scores_epoch)
 

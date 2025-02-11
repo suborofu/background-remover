@@ -33,8 +33,10 @@ if __name__ == "__main__":
         config.BODY_SIZE,
         config.REFINER_SIZE,
         config.BODY_DEPTH,
+        config.REFINER_DEPTH,
         config.THRESHOLD,
         config.FILTER_SIZE,
+        use_refiner=False,
     )
 
     os.makedirs(config.CHECKPOINT_PATH, exist_ok=True)
@@ -64,13 +66,18 @@ if __name__ == "__main__":
         dataset_path=config.DATASET_PATH,
         batch_size=config.BATCH_SIZE,
         train_size=config.TRAIN_SIZE,
+        dataset_classes=config.DATASET_CLASSES,
         val_size=config.VAL_SIZE,
         learning_rate=config.LEARNING_RATE,
         checkpoint_path=config.CHECKPOINT_PATH,
-        logger=logger,
         do_train_body=config.DO_TRAIN_BODY,
         do_train_refiner=config.DO_TRAIN_REFINER,
+        logger=logger,
     )
 
-    trainer.train()
-    task.close()
+    try:
+        trainer.train()
+    except Exception as e:
+        logging.error(e)
+    finally:
+        task.close()

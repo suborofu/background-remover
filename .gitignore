@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
 lib64/
 parts/
 sdist/
@@ -174,4 +174,11 @@ dataset/
 *.jpg
 *.png
 *.onnx
-.pth
+*.pth
+*.tflite
+node_modules/
+.next/
+model*/
+model*
+!models/
+temp*.py
