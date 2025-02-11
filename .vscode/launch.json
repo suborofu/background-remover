@@ -10,6 +10,29 @@
             "env": {
                 "PYTHONPATH": "${cwd}"
             }
+        },
+        {
+            "type": "node-terminal",
+            "request": "launch",
+            "name": "Demo file server",
+            "command": "http-server --cors",
+            "cwd": "${workspaceRoot}/demo"
+        },
+        {
+            "type": "node-terminal",
+            "name": "Demo client",
+            "request": "launch",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}/demo"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Demo",
+            "configurations": [
+                "Demo file server",
+                "Demo client"
+            ]
         }
     ]
 }

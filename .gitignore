@@ -176,9 +176,14 @@ dataset/
 *.onnx
 *.pth
 *.tflite
-node_modules/
-.next/
 model*/
 model*
 !models/
 temp*.py
+
+
+.DS_Store
+/demo/node_modules
+/demo/public/
+/demo/app/api
+/demo/.next/
