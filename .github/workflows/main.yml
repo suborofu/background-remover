@@ -21,6 +21,6 @@ jobs:
       - name: Install dependencies
         run: cd ${{ github.workspace }}/demo && npm ci
       - name: Build
-        run: cd ${{ github.workspace }}/demo && npm build
+        run: cd ${{ github.workspace }}/demo && npm run build
       - name: Start
-        run: cd ${{ github.workspace }}/demo && npm start
+        run: cd ${{ github.workspace }}/demo && npm run start
