@@ -10,8 +10,8 @@ import "@tensorflow/tfjs-backend-webgpu";
 import { setWasmPaths, setThreadsCount } from "@tensorflow/tfjs-backend-wasm";
 import { openDB } from "idb";
 
-const ONNX_MODEL_URL = "http://localhost:8080/model.onnx";
-const TFJS_MODEL_URL = "http://localhost:8080/model.tfjs/model.json";
+const ONNX_MODEL_URL = "https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.onnx";
+const TFJS_MODEL_URL = "https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.json";
 
 const ONNX_WASM_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@dev/dist/";
 const TFJS_WASM_URL =
