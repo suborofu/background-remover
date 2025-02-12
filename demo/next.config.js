@@ -14,6 +14,7 @@ const nextConfig = {
     };
     return config;
   },
+  output: "export",
   distDir: "build",
   basePath: "/background-remover",
 };

@@ -5,6 +5,15 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build
@@ -25,24 +34,21 @@ jobs:
           cache: npm
           cache-dependency-path: ${{ github.workspace }}/package-lock.json
       - name: Install dependencies
-        run: cd ${{ github.workspace }} && npm ci
+        run: npm ci
       - name: Setup Pages
         uses: actions/configure-pages@v4
         with:
           static_site_generator: next
       - name: Build
-        run: cd ${{ github.workspace }} && npm run build
+        run: npx next build
       - name: Jekyll bypass
-        run: touch ${{ github.workspace }}/build/.nojekyll
+        run: touch ./build/.nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ github.workspace }}/build
+          path: ./build
 
   deploy:
-    permissions:
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
