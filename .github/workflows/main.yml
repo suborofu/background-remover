@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  weights_path: https://github.com/suborofu/background-remover/releases/tag/v0.1.0/${{ vars.LAST_RELEASE_VERSION }}
+  weights_path: https://github.com/suborofu/background-remover/releases/download/v${{ vars.LAST_RELEASE_VERSION }}
 
 jobs:
   build:
