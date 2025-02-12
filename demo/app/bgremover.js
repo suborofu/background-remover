@@ -46,7 +46,7 @@ class ONNXBGRemover {
       );
       model = await fetch(url).then((response) => response.arrayBuffer());
       console.log("Downloaded", model);
-      await db.add("models_store", model, filename);
+      // await db.add("models_store", model, filename);
     }
     db.close();
     return model;
@@ -106,7 +106,7 @@ class TFJSBGRemover {
       );
       model = await tf.loadGraphModel(url);
       console.log("Downloaded", model);
-      model.save("indexeddb://" + filename);
+      // model.save("indexeddb://" + filename);
     }
     return model;
   }
