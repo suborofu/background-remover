@@ -14,6 +14,9 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+env:
+  weights_path: ${{ vars.LAST_RELEASE_VERSION }}
+
 jobs:
   build:
     name: Build
@@ -39,14 +42,15 @@ jobs:
         uses: actions/configure-pages@v4
         with:
           static_site_generator: next
-      - name: Build
-        run: npx next build
       - name: Download model files
         run: |
-          mkdir ./build/model_weights
-          wget https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.onnx
-          wget https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.json
-          wget https://github.com/suborofu/background-remover/releases/download/v0.1.0/group1-shard1of1.bin
+          mkdir ./model_weights
+          cd ./model_weights
+          wget $weights_path/model.onnx
+          wget $weights_path/model.json
+          wget $weights_path/group1-shard1of1.bin
+      - name: Build
+        run: npx next build
       - name: Jekyll bypass
         run: touch ./build/.nojekyll
       - name: Upload artifact
