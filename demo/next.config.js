@@ -15,5 +15,6 @@ const nextConfig = {
     return config;
   },
   distDir: "build",
+  basePath: "/background-remover",
 };
 module.exports = nextConfig;
