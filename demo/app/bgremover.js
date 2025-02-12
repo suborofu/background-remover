@@ -7,13 +7,15 @@ import "@tensorflow/tfjs-backend-wasm";
 import "@tensorflow/tfjs-backend-webgl";
 import "@tensorflow/tfjs-backend-webgpu";
 
-import { setWasmPaths, setThreadsCount } from "@tensorflow/tfjs-backend-wasm";
+import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm";
 import { openDB } from "idb";
 
-const ONNX_MODEL_URL = "https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.onnx";
-const TFJS_MODEL_URL = "https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.json";
+const WEIGHTS_URL =
+  "https://suborofu.github.io/background-remover/model_weights";
 
-const ONNX_WASM_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@dev/dist/";
+const ONNX_MODEL_URL = WEIGHTS_URL + "/model.onnx";
+const TFJS_MODEL_URL = WEIGHTS_URL + "/model.json";
+
 const TFJS_WASM_URL =
   "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm/wasm-out/";
 

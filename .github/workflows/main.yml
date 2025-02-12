@@ -41,6 +41,12 @@ jobs:
           static_site_generator: next
       - name: Build
         run: npx next build
+      - name: Download model files
+        run: |
+          mkdir ./build/model_weights
+          wget https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.onnx
+          wget https://github.com/suborofu/background-remover/releases/download/v0.1.0/model.json
+          wget https://github.com/suborofu/background-remover/releases/download/v0.1.0/group1-shard1of1.bin
       - name: Jekyll bypass
         run: touch ./build/.nojekyll
       - name: Upload artifact
