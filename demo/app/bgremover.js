@@ -10,11 +10,10 @@ import "@tensorflow/tfjs-backend-webgpu";
 import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm";
 import { openDB } from "idb";
 
-const WEIGHTS_URL =
-  "https://suborofu.github.io/background-remover/model_weights";
+const PROJECT_URL = "https://suborofu.github.io/background-remover";
 
-const ONNX_MODEL_URL = WEIGHTS_URL + "/model.onnx";
-const TFJS_MODEL_URL = WEIGHTS_URL + "/model.json";
+const ONNX_MODEL_URL = PROJECT_URL + "/model.onnx";
+const TFJS_MODEL_URL = PROJECT_URL + "/model.json";
 
 const TFJS_WASM_URL =
   "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm/wasm-out/";

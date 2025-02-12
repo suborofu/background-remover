@@ -42,15 +42,14 @@ jobs:
         uses: actions/configure-pages@v4
         with:
           static_site_generator: next
+      - name: Build
+        run: npx next build
       - name: Download model files
         run: |
-          mkdir ./model_weights
-          cd ./model_weights
+          cd build
           wget $weights_path/model.onnx
           wget $weights_path/model.json
           wget $weights_path/group1-shard1of1.bin
-      - name: Build
-        run: npx next build
       - name: Jekyll bypass
         run: touch ./build/.nojekyll
       - name: Upload artifact
